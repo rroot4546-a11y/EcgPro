@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <external-files-path name="ecg_photos" path="Pictures/" />
+    <external-files-path name="ecg_reports" path="Documents/ECG_Reports/" />
     <files-path name="ecg_images" path="ecg_images/" />
 </paths>

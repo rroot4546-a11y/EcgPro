@@ -4,351 +4,78 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_light">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <!-- Header -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/gradient_header"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="20dp"
-            android:paddingTop="40dp">
-
-            <ImageButton
-                android:id="@+id/btnBack"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:src="@android:drawable/ic_menu_revert"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="4dp"
-                android:contentDescription="Back" />
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="📊 Analyze ECG"
-                android:textColor="@color/white"
-                android:textSize="22sp"
-                android:textStyle="bold"
-                android:layout_marginStart="12dp" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:background="@drawable/gradient_header" android:gravity="center_vertical" android:padding="20dp" android:paddingTop="40dp">
+            <ImageButton android:id="@+id/btnBack" android:layout_width="36dp" android:layout_height="36dp"
+                android:src="@android:drawable/ic_menu_revert" android:background="?attr/selectableItemBackgroundBorderless" />
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="📊 Analyze ECG" android:textColor="@color/white" android:textSize="22sp" android:textStyle="bold" android:layout_marginStart="12dp" />
         </LinearLayout>
 
-        <!-- Image Selection -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="3dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Step 1: ECG Image"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary" />
-
-                <TextView
-                    android:id="@+id/tvNoImage"
-                    android:layout_width="match_parent"
-                    android:layout_height="150dp"
-                    android:gravity="center"
-                    android:text="📷 Tap to select ECG image"
-                    android:textSize="16sp"
-                    android:textColor="@color/text_secondary"
-                    android:background="#F5F5F5" />
-
-                <ImageView
-                    android:id="@+id/ivPreview"
-                    android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:scaleType="centerCrop"
-                    android:visibility="gone"
-                    android:contentDescription="ECG Preview" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="12dp"
-                    android:gravity="center">
-
-                    <Button
-                        android:id="@+id/btnCamera"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="6dp"
-                        android:text="📷 Camera"
-                        android:textSize="13sp"
-                        android:backgroundTint="@color/primary" />
-
-                    <Button
-                        android:id="@+id/btnGallery"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="1"
-                        android:layout_marginStart="6dp"
-                        android:text="🖼️ Gallery"
-                        android:textSize="13sp"
-                        android:backgroundTint="@color/primary" />
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_margin="16dp" app:cardCornerRadius="16dp" app:cardElevation="3dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Step 1: ECG Image" android:textSize="16sp" android:textStyle="bold" android:textColor="@color/primary" />
+                <TextView android:id="@+id/tvNoImage" android:layout_width="match_parent" android:layout_height="150dp" android:gravity="center" android:text="📷 Tap to select ECG" android:textSize="16sp" android:textColor="@color/text_secondary" android:background="#F5F5F5" />
+                <ImageView android:id="@+id/ivPreview" android:layout_width="match_parent" android:layout_height="200dp" android:scaleType="centerCrop" android:visibility="gone" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="12dp" android:gravity="center">
+                    <Button android:id="@+id/btnCamera" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:layout_marginEnd="6dp" android:text="📷 Camera" android:textSize="13sp" android:backgroundTint="@color/primary" />
+                    <Button android:id="@+id/btnGallery" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:layout_marginStart="6dp" android:text="🖼️ Gallery" android:textSize="13sp" android:backgroundTint="@color/primary" />
                 </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- ECG Settings Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="12dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="3dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="📐 ECG Settings"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary" />
-
-                <!-- Layout Picker -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="ECG Layout:"
-                    android:textSize="13sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginTop="12dp" />
-
-                <Spinner
-                    android:id="@+id/spinnerEcgLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:background="@android:drawable/btn_dropdown"
-                    android:paddingHorizontal="8dp" />
-
-                <!-- Paper Speed -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Paper Speed:"
-                    android:textSize="13sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginTop="12dp" />
-
-                <RadioGroup
-                    android:id="@+id/rgPaperSpeed"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <RadioButton
-                        android:id="@+id/rbSpeed25"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="25 mm/s"
-                        android:checked="true" />
-                    <RadioButton
-                        android:id="@+id/rbSpeed50"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="50 mm/s"
-                        android:layout_marginStart="16dp" />
-                </RadioGroup>
-
-                <!-- Voltage Gain -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Voltage Gain:"
-                    android:textSize="13sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginTop="12dp" />
-
-                <RadioGroup
-                    android:id="@+id/rgVoltageGain"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <RadioButton
-                        android:id="@+id/rbGain10"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="10 mm/mV"
-                        android:checked="true" />
-                    <RadioButton
-                        android:id="@+id/rbGain5"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="5 mm/mV"
-                        android:layout_marginStart="16dp" />
-                </RadioGroup>
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp" android:layout_marginBottom="8dp" app:cardCornerRadius="16dp" app:cardElevation="3dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Step 2: ECG Settings" android:textSize="16sp" android:textStyle="bold" android:textColor="@color/primary" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginEnd="4dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📐 Layout" android:textSize="12sp" android:textColor="@color/text_secondary" />
+                        <Spinner android:id="@+id/spinLayout" android:layout_width="match_parent" android:layout_height="40dp" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginHorizontal="4dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⏱️ Speed" android:textSize="12sp" android:textColor="@color/text_secondary" />
+                        <Spinner android:id="@+id/spinSpeed" android:layout_width="match_parent" android:layout_height="40dp" />
+                    </LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="4dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📊 Gain" android:textSize="12sp" android:textColor="@color/text_secondary" />
+                        <Spinner android:id="@+id/spinVoltage" android:layout_width="match_parent" android:layout_height="40dp" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Patient Info -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="3dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Step 2: Patient Info (Optional)"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary" />
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:hint="Patient Name">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etPatientName"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textPersonName" />
+        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp" android:layout_marginBottom="16dp" app:cardCornerRadius="16dp" app:cardElevation="3dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Step 3: Patient Info (Optional)" android:textSize="16sp" android:textStyle="bold" android:textColor="@color/primary" />
+                <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:hint="Patient Name">
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etPatientName" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textPersonName" />
                 </com.google.android.material.textfield.TextInputLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="8dp">
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="8dp"
-                        android:hint="Age">
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etAge"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="number" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <com.google.android.material.textfield.TextInputLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginEnd="8dp" android:hint="Age">
+                        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etAge" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" />
                     </com.google.android.material.textfield.TextInputLayout>
-
-                    <RadioGroup
-                        android:id="@+id/rgGender"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:layout_gravity="center_vertical">
-                        <RadioButton
-                            android:id="@+id/rbMale"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Male"
-                            android:checked="true" />
-                        <RadioButton
-                            android:id="@+id/rbFemale"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Female" />
+                    <RadioGroup android:id="@+id/rgGender" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_gravity="center_vertical">
+                        <RadioButton android:id="@+id/rbMale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="M" android:checked="true" />
+                        <RadioButton android:id="@+id/rbFemale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="F" />
                     </RadioGroup>
                 </LinearLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:hint="Symptoms (e.g. chest pain, dyspnea)">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etSymptoms"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textMultiLine"
-                        android:minLines="2"
-                        android:gravity="top" />
+                <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:hint="Symptoms">
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etSymptoms" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:gravity="top" />
                 </com.google.android.material.textfield.TextInputLayout>
-
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:hint="Clinical History (e.g. DM, HTN, MI)">
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etHistory"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="textMultiLine"
-                        android:minLines="2"
-                        android:gravity="top" />
+                <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:hint="Clinical History">
+                    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etHistory" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine" android:minLines="2" android:gravity="top" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Analyze Button -->
-        <Button
-            android:id="@+id/btnAnalyze"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginBottom="8dp"
-            android:text="🔍 Analyze ECG (38 Diagnoses)"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:backgroundTint="@color/primary" />
-
-        <ProgressBar
-            android:id="@+id/progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp"
-            android:layout_marginBottom="24dp"
-            android:visibility="gone" />
-
-        <!-- Disclaimer -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="⚠️ AI-assisted interpretation only. Always verify with a qualified cardiologist."
-            android:textSize="11sp"
-            android:textColor="#999"
-            android:gravity="center"
-            android:padding="16dp" />
+        <Button android:id="@+id/btnAnalyze" android:layout_width="match_parent" android:layout_height="56dp"
+            android:layout_marginHorizontal="16dp" android:layout_marginBottom="8dp" android:text="🫀 Analyze ECG" android:textSize="16sp" android:textStyle="bold" android:backgroundTint="@color/primary" />
+        <ProgressBar android:id="@+id/progress" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center" android:visibility="gone" />
+        <TextView android:id="@+id/tvStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:textColor="@color/text_secondary" android:textSize="14sp" android:visibility="gone" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⚠️ AI-assisted only. Verify with a cardiologist." android:textSize="11sp" android:textColor="#999" android:gravity="center" android:padding="16dp" />
     </LinearLayout>
 </ScrollView>

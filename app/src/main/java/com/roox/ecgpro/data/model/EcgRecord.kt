@@ -13,8 +13,8 @@ data class EcgRecord(
     val clinicalHistory: String = "",
     val imagePath: String = "",
     val diagnosis: String = "",
-    val confidence: Int = 0,           // 0-100%
-    val urgencyLevel: String = "",     // routine, urgent, emergent
+    val confidence: Int = 0,
+    val urgencyLevel: String = "",
     val heartRate: Int = 0,
     val rhythm: String = "",
     val axis: String = "",
@@ -23,21 +23,24 @@ data class EcgRecord(
     val qtInterval: String = "",
     val stChanges: String = "",
     val fullAnalysis: String = "",
-    val ecgParams: String = "",        // JSON of synthesized waveform params
+    val ecgParams: String = "",
     val aiModel: String = "",
-    val timestamp: Long = System.currentTimeMillis(),
     // v2.0 fields
-    val ecgLayout: String = "standard_3x2",   // single_page, standard_6x1, standard_3x2, cabrera_6x1, cabrera_3x2
-    val paperSpeed: String = "25",             // "25" or "50" mm/s
-    val voltageGain: String = "10",            // "10" or "5" mm/mV
-    val acsRisk: String = "",                  // confirmed, indeterminate, not_omi, outside_population, reperfused, presentation_missing
-    val leadImportance: String = ""            // JSON: {"I":"normal","II":"high","V1":"critical",...}
+    val ecgLayout: String = "SinglePage",
+    val paperSpeed: String = "25",
+    val voltageGain: String = "10",
+    val acsRisk: String = "",
+    val lvefStatus: String = "",
+    val axisClassification: String = "",
+    val leadImportance: String = "",
+    val diagnosticGroups: String = "",
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 @Entity(tableName = "chat_messages")
 data class ChatMessage(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val role: String = "user",         // user, assistant
+    val role: String = "user",
     val content: String = "",
     val imageUri: String = "",
     val timestamp: Long = System.currentTimeMillis()

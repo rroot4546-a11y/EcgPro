@@ -28,12 +28,10 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("ecg_pro_prefs", MODE_PRIVATE)
         if (!prefs.getBoolean("onboarding_done", false)) {
             startActivity(Intent(this, OnboardingActivity::class.java))
-            finish()
-            return
+            finish(); return
         }
 
         setContentView(R.layout.activity_main)
-
         vm = ViewModelProvider(this).get(EcgViewModel::class.java)
 
         val rv = findViewById<RecyclerView>(R.id.rvRecords)
@@ -53,17 +51,9 @@ class MainActivity : AppCompatActivity() {
             tvCount.text = "${records.size} records"
         }
 
-        findViewById<View>(R.id.btnAnalyze).setOnClickListener {
-            startActivity(Intent(this, AnalyzeActivity::class.java))
-        }
-        findViewById<View>(R.id.btnChat).setOnClickListener {
-            startActivity(Intent(this, ChatActivity::class.java))
-        }
-        findViewById<View>(R.id.btnSettings).setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
-        }
-        findViewById<View>(R.id.btnTraining).setOnClickListener {
-            startActivity(Intent(this, TrainingActivity::class.java))
-        }
+        findViewById<View>(R.id.btnAnalyze).setOnClickListener { startActivity(Intent(this, AnalyzeActivity::class.java)) }
+        findViewById<View>(R.id.btnChat).setOnClickListener { startActivity(Intent(this, ChatActivity::class.java)) }
+        findViewById<View>(R.id.btnTraining).setOnClickListener { startActivity(Intent(this, TrainingActivity::class.java)) }
+        findViewById<View>(R.id.btnSettings).setOnClickListener { startActivity(Intent(this, SettingsActivity::class.java)) }
     }
 }

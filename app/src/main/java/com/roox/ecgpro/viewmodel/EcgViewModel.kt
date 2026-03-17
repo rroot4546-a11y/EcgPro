@@ -19,13 +19,12 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 
 class EcgViewModel(application: Application) : AndroidViewModel(application) {
-
     private val app = application as EcgProApp
     private val repo = app.repo
 
-    val allRecords: LiveData<List<EcgRecord>> = repo.allRecords
-    val allChats: LiveData<List<ChatMessage>> = repo.allChats
-    val allTraining: LiveData<List<TrainingRecord>> = repo.allTraining
+    val allRecords = repo.allRecords
+    val allChats = repo.allChats
+    val allTraining = repo.allTraining
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
@@ -34,50 +33,40 @@ class EcgViewModel(application: Application) : AndroidViewModel(application) {
     val analysisResult: LiveData<EcgRecord?> = _analysisResult
 
     fun clearResult() { _analysisResult.value = null }
-
-    suspend fun getRecord(id: Int): EcgRecord? = repo.getRecord(id)
+    suspend fun getRecord(id: Int) = repo.getRecord(id)
 
     fun analyzeEcg(
-        imageUri: Uri,
-        symptoms: String,
-        age: String,
-        gender: String,
-        history: String,
-        patientName: String,
-        prefs: SharedPreferences,
-        contentResolver: ContentResolver,
-        ecgLayout: String = "standard_3x2",
-        paperSpeed: String = "25",
-        voltageGain: String = "10"
+        imageUri: Uri, symptoms: String, age: String, gender: String, history: String,
+        patientName: String, prefs: SharedPreferences, cr: ContentResolver,
+        layout: String = "SinglePage", paperSpeed: String = "25", voltageGain: String = "10"
     ) {
         _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val ai = AiService.fromPrefs(prefs)
-                val img64 = imageToBase64(imageUri, contentResolver)
-                val result = ai.analyzeEcg(img64, symptoms, age, gender, history, ecgLayout, paperSpeed, voltageGain)
+                val img64 = imageToBase64(imageUri, cr)
+                val result = ai.analyzeEcg(img64, symptoms, age, gender, history, layout, paperSpeed, voltageGain)
 
-                val imagePath = saveImage(imageUri, contentResolver)
+                val imagePath = saveImage(imageUri, cr)
                 val hr = extractInt(result, """heart\s*rate[:\s]*(\d+)""") ?: extractInt(result, """(\d+)\s*bpm""") ?: 0
-                val rhythm = extractString(result, """rhythm[:\s]*(.+)""") ?: "Unknown"
-                val axis = extractString(result, """axis[:\s]*(.+)""") ?: ""
-                val prI = extractString(result, """pr(?:\s*interval)?[:\s]*(.+?ms)""") ?: ""
-                val qrsD = extractString(result, """qrs(?:\s*(?:duration|complex))?[:\s]*(.+?ms)""") ?: ""
-                val qtI = extractString(result, """qt(?:/qtc)?[:\s]*(.+?ms)""") ?: ""
+                val rhythm = extractStr(result, """rhythm[:\s]*(.+)""") ?: "Unknown"
+                val axis = extractStr(result, """axis[:\s]*(.+?)[(\n]""") ?: ""
+                val prI = extractStr(result, """pr(?:\s*interval)?[:\s]*(.+?ms)""") ?: ""
+                val qrsD = extractStr(result, """qrs(?:\s*(?:duration|complex))?[:\s]*(.+?ms)""") ?: ""
+                val qtI = extractStr(result, """qt(?:/qtc)?[:\s]*(.+?ms)""") ?: ""
                 val urgency = when {
-                    result.lowercase().contains("emergent") || result.lowercase().contains("🔴") -> "emergent"
-                    result.lowercase().contains("urgent") || result.lowercase().contains("🟡") -> "urgent"
+                    result.lowercase().contains("emergent") || result.contains("🔴") -> "emergent"
+                    result.lowercase().contains("urgent") || result.contains("🟡") -> "urgent"
                     else -> "routine"
                 }
                 val confidence = extractInt(result, """confidence[:\s]*(\d+)""") ?: 0
-                val diagnosis = extractString(result, """(?:primary\s*)?diagnosis[:\s]*(.+)""") ?: "See full analysis"
-                val modelName = prefs.getString("model", "") ?: ""
-
-                // v2.0: Parse ACS risk
-                val acsRisk = parseAcsRisk(result)
-
-                // v2.0: Parse lead importance as JSON
-                val leadImportance = parseLeadImportance(result)
+                val diagnosis = extractStr(result, """(?:primary\s*)?diagnosis[:\s]*(.+)""") ?: "See full analysis"
+                val acsRisk = extractStr(result, """acs\s*risk[:\s]*(\w+)""") ?: ""
+                val lvef = extractStr(result, """lvef\s*status[:\s]*(\w+)""") ?: ""
+                val axisClass = extractStr(result, """classification[:\s]*(Normal|Left|Right|Extreme)""") ?: ""
+                val leadImp = extractStr(result, """(?:lead\s*importance|LEAD IMPORTANCE)[:\s]*(.+)""") ?: ""
+                val diagGroups = extractStr(result, """(?:RHYTHM|rhythm)[:\s]*(.+)""") ?: ""
+                val model = prefs.getString("model", "") ?: ""
 
                 val record = EcgRecord(
                     patientName = patientName, patientAge = age, patientGender = gender,
@@ -85,139 +74,65 @@ class EcgViewModel(application: Application) : AndroidViewModel(application) {
                     diagnosis = diagnosis, confidence = confidence, urgencyLevel = urgency,
                     heartRate = hr, rhythm = rhythm, axis = axis, prInterval = prI,
                     qrsDuration = qrsD, qtInterval = qtI, fullAnalysis = result,
-                    ecgParams = "", aiModel = modelName,
-                    ecgLayout = ecgLayout, paperSpeed = paperSpeed, voltageGain = voltageGain,
-                    acsRisk = acsRisk, leadImportance = leadImportance
+                    ecgParams = "", aiModel = model,
+                    ecgLayout = layout, paperSpeed = paperSpeed, voltageGain = voltageGain,
+                    acsRisk = acsRisk, lvefStatus = lvef, axisClassification = axisClass,
+                    leadImportance = leadImp, diagnosticGroups = diagGroups
                 )
                 val id = repo.insertRecord(record)
                 _analysisResult.postValue(record.copy(id = id.toInt()))
-            } catch (e: Exception) {
-                _analysisResult.postValue(null)
-            } finally {
-                _isLoading.postValue(false)
-            }
+            } catch (e: Exception) { _analysisResult.postValue(null) }
+            finally { _isLoading.postValue(false) }
         }
     }
 
-    fun sendChat(message: String, imageUri: Uri?, prefs: SharedPreferences, contentResolver: ContentResolver) {
+    fun sendChat(msg: String, imgUri: Uri?, prefs: SharedPreferences, cr: ContentResolver) {
         _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val imgPath = if (imageUri != null) saveImage(imageUri, contentResolver) else ""
-                repo.insertChat(ChatMessage(role = "user", content = message, imageUri = imgPath))
-
+                val imgPath = if (imgUri != null) saveImage(imgUri, cr) else ""
+                repo.insertChat(ChatMessage(role = "user", content = msg, imageUri = imgPath))
                 val ai = AiService.fromPrefs(prefs)
-                val img64 = if (imageUri != null) imageToBase64(imageUri, contentResolver) else null
+                val img64 = if (imgUri != null) imageToBase64(imgUri, cr) else null
                 val recent = repo.recentChats(10).reversed()
-                val historyList = recent.map { mapOf<String, Any>("role" to it.role, "content" to it.content) }
-                val result = ai.chat(message, img64, historyList)
-
+                val hist = recent.map { mapOf<String, Any>("role" to it.role, "content" to it.content) }
+                val result = ai.chat(msg, img64, hist)
                 repo.insertChat(ChatMessage(role = "assistant", content = result))
             } catch (e: Exception) {
-                repo.insertChat(ChatMessage(role = "assistant", content = "❌ Error: ${e.message}"))
-            } finally {
-                _isLoading.postValue(false)
-            }
+                repo.insertChat(ChatMessage(role = "assistant", content = "❌ ${e.message}"))
+            } finally { _isLoading.postValue(false) }
         }
     }
 
-    fun insertTraining(record: TrainingRecord) {
+    fun addTraining(imgUri: Uri, diagnosis: String, notes: String, cr: ContentResolver) {
         viewModelScope.launch(Dispatchers.IO) {
-            repo.insertTraining(record)
+            val path = saveImage(imgUri, cr)
+            repo.insertTraining(TrainingRecord(imagePath = path, knownDiagnosis = diagnosis, notes = notes))
         }
     }
 
-    fun deleteTraining(record: TrainingRecord) {
-        viewModelScope.launch(Dispatchers.IO) {
-            repo.deleteTraining(record)
-        }
+    private fun imageToBase64(uri: Uri, cr: ContentResolver): String = try {
+        val input = cr.openInputStream(uri) ?: return ""
+        val bmp = BitmapFactory.decodeStream(input); input.close()
+        val s = scaleBitmap(bmp, 1024)
+        val baos = ByteArrayOutputStream()
+        s.compress(Bitmap.CompressFormat.JPEG, 85, baos)
+        Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+    } catch (_: Exception) { "" }
+
+    private fun scaleBitmap(bmp: Bitmap, max: Int): Bitmap {
+        val r = minOf(max.toFloat() / bmp.width, max.toFloat() / bmp.height)
+        return if (r >= 1f) bmp else Bitmap.createScaledBitmap(bmp, (bmp.width * r).toInt(), (bmp.height * r).toInt(), true)
     }
 
-    /** Parse ACS Risk from AI text */
-    private fun parseAcsRisk(text: String): String {
-        val lower = text.lowercase()
-        return when {
-            lower.contains("acs risk: confirmed") || lower.contains("acs suspicion: yeswithsymptoms") -> "confirmed"
-            lower.contains("acs risk: indeterminate") || lower.contains("acs suspicion: yeswithout") -> "indeterminate"
-            lower.contains("acs risk: not omi") || lower.contains("acs suspicion: no") -> "not_omi"
-            lower.contains("acs risk: outside population") || lower.contains("outside_population") -> "outside_population"
-            lower.contains("acs risk: reperfused") -> "reperfused"
-            lower.contains("acs risk: presentation missing") || lower.contains("presentation missing") -> "presentation_missing"
-            else -> "unknown"
-        }
-    }
+    private fun saveImage(uri: Uri, cr: ContentResolver): String = try {
+        val input = cr.openInputStream(uri) ?: return ""
+        val dir = File(app.filesDir, "ecg_images"); dir.mkdirs()
+        val file = File(dir, "ecg_${System.currentTimeMillis()}.jpg")
+        file.outputStream().use { out -> input.copyTo(out) }; input.close()
+        file.absolutePath
+    } catch (_: Exception) { "" }
 
-    /** Parse lead importance from AI text into JSON string */
-    private fun parseLeadImportance(text: String): String {
-        val leads = listOf("I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6")
-        val result = mutableMapOf<String, String>()
-        val lower = text.lowercase()
-
-        // Try parsing "Lead:level" format
-        for (lead in leads) {
-            val leadLower = lead.lowercase()
-            val pattern = Regex("""$leadLower\s*:\s*(critical|high|moderate|low|normal)""", RegexOption.IGNORE_CASE)
-            val match = pattern.find(lower)
-            if (match != null) {
-                result.put(lead, match.groupValues.get(1).lowercase())
-            } else {
-                result.put(lead, "normal")
-            }
-        }
-
-        // Also check for ranges like "V1-V4(critical)"
-        val rangePattern = Regex("""(V\d)\s*-\s*(V\d)\s*[\(:]?\s*(critical|high|moderate|low|normal)""", RegexOption.IGNORE_CASE)
-        for (match in rangePattern.findAll(text)) {
-            val startNum = match.groupValues.get(1).substring(1).toIntOrNull() ?: continue
-            val endNum = match.groupValues.get(2).substring(1).toIntOrNull() ?: continue
-            val level = match.groupValues.get(3).lowercase()
-            for (n in startNum..endNum) {
-                result.put("V$n", level)
-            }
-        }
-
-        val sb = StringBuilder("{")
-        var first = true
-        for (entry in result.entries) {
-            if (!first) sb.append(",")
-            sb.append("\"${entry.key}\":\"${entry.value}\"")
-            first = false
-        }
-        sb.append("}")
-        return sb.toString()
-    }
-
-    private fun imageToBase64(uri: Uri, cr: ContentResolver): String {
-        return try {
-            val input = cr.openInputStream(uri) ?: return ""
-            val bitmap = BitmapFactory.decodeStream(input)
-            input.close()
-            val scaled = scaleBitmap(bitmap, 1024)
-            val baos = ByteArrayOutputStream()
-            scaled.compress(Bitmap.CompressFormat.JPEG, 85, baos)
-            Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
-        } catch (_: Exception) { "" }
-    }
-
-    private fun scaleBitmap(bmp: Bitmap, maxDim: Int): Bitmap {
-        val ratio = minOf(maxDim.toFloat() / bmp.width, maxDim.toFloat() / bmp.height)
-        if (ratio >= 1f) return bmp
-        return Bitmap.createScaledBitmap(bmp, (bmp.width * ratio).toInt(), (bmp.height * ratio).toInt(), true)
-    }
-
-    fun saveImage(uri: Uri, cr: ContentResolver): String {
-        return try {
-            val input = cr.openInputStream(uri) ?: return ""
-            val dir = File(app.filesDir, "ecg_images"); dir.mkdirs()
-            val file = File(dir, "ecg_${System.currentTimeMillis()}.jpg")
-            file.outputStream().use { out -> input.copyTo(out) }; input.close()
-            file.absolutePath
-        } catch (_: Exception) { "" }
-    }
-
-    private fun extractInt(text: String, pattern: String) =
-        Regex(pattern, RegexOption.IGNORE_CASE).find(text)?.groupValues?.get(1)?.trim()?.toIntOrNull()
-
-    private fun extractString(text: String, pattern: String) =
-        Regex(pattern, RegexOption.IGNORE_CASE).find(text)?.groupValues?.get(1)?.trim()
+    private fun extractInt(t: String, p: String) = Regex(p, RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()?.toIntOrNull()
+    private fun extractStr(t: String, p: String) = Regex(p, RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
 }

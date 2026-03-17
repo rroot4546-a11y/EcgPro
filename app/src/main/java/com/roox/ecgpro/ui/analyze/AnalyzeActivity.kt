@@ -24,19 +24,12 @@ class AnalyzeActivity : AppCompatActivity() {
     private var imageUri: Uri? = null
     private var cameraPhotoFile: File? = null
 
-    // ECG settings
-    private var selectedLayout = "standard_3x2"
-    private var selectedPaperSpeed = "25"
-    private var selectedVoltageGain = "10"
-
     private val pickImage = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { setImage(it) }
     }
-
     private val takePhoto = registerForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
         if (ok) cameraPhotoFile?.let { setImage(Uri.fromFile(it)) }
     }
-
     private val reqPerm = registerForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (ok) launchCamera()
     }
@@ -54,65 +47,47 @@ class AnalyzeActivity : AppCompatActivity() {
         val rgGender = findViewById<RadioGroup>(R.id.rgGender)
         val etSymptoms = findViewById<EditText>(R.id.etSymptoms)
         val etHistory = findViewById<EditText>(R.id.etHistory)
+        val spinLayout = findViewById<Spinner>(R.id.spinLayout)
+        val spinSpeed = findViewById<Spinner>(R.id.spinSpeed)
+        val spinVoltage = findViewById<Spinner>(R.id.spinVoltage)
         val btnAnalyze = findViewById<Button>(R.id.btnAnalyze)
         val progress = findViewById<ProgressBar>(R.id.progress)
         val tvStatus = findViewById<TextView>(R.id.tvStatus)
 
-        // ECG Layout Spinner
-        val spinnerLayout = findViewById<Spinner>(R.id.spinnerEcgLayout)
-        val layoutOptions = arrayOf("Standard 3×2", "Standard 6×1", "Single Page", "Cabrera 6×1", "Cabrera 3×2")
-        val layoutValues = arrayOf("standard_3x2", "standard_6x1", "single_page", "cabrera_6x1", "cabrera_3x2")
-        spinnerLayout.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, layoutOptions)
-        spinnerLayout.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedLayout = layoutValues.get(position)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
+        // Layout spinner
+        val layouts = listOf("SinglePage", "Standard 6x1", "Standard 3x2", "Cabrera 6x1", "Cabrera 3x2")
+        spinLayout.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, layouts)
 
-        // Paper Speed toggle
-        val rgPaperSpeed = findViewById<RadioGroup>(R.id.rgPaperSpeed)
-        rgPaperSpeed.setOnCheckedChangeListener { _, checkedId ->
-            selectedPaperSpeed = if (checkedId == R.id.rbSpeed50) "50" else "25"
-        }
+        // Speed spinner
+        spinSpeed.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listOf("25 mm/s", "50 mm/s"))
 
-        // Voltage Gain toggle
-        val rgVoltageGain = findViewById<RadioGroup>(R.id.rgVoltageGain)
-        rgVoltageGain.setOnCheckedChangeListener { _, checkedId ->
-            selectedVoltageGain = if (checkedId == R.id.rbGain5) "5" else "10"
-        }
+        // Voltage spinner
+        spinVoltage.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, listOf("10 mm/mV", "5 mm/mV"))
 
-        // Camera & Gallery
         findViewById<Button>(R.id.btnCamera).setOnClickListener {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                launchCamera()
-            } else {
-                reqPerm.launch(Manifest.permission.CAMERA)
-            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) launchCamera()
+            else reqPerm.launch(Manifest.permission.CAMERA)
         }
         findViewById<Button>(R.id.btnGallery).setOnClickListener { pickImage.launch("image/*") }
-
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
 
         btnAnalyze.setOnClickListener {
             val uri = imageUri
             if (uri == null) { Toast.makeText(this, "Select an ECG image first", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
-
-            val gender = when (rgGender.checkedRadioButtonId) {
-                R.id.rbMale -> "Male"; R.id.rbFemale -> "Female"; else -> "Unknown"
-            }
+            val gender = when (rgGender.checkedRadioButtonId) { R.id.rbMale -> "Male"; R.id.rbFemale -> "Female"; else -> "Unknown" }
+            val layout = layouts.get(spinLayout.selectedItemPosition)
+            val speed = if (spinSpeed.selectedItemPosition == 0) "25" else "50"
+            val voltage = if (spinVoltage.selectedItemPosition == 0) "10" else "5"
             val prefs = getSharedPreferences("ecg_pro_prefs", MODE_PRIVATE)
-            vm.analyzeEcg(
-                uri, etSymptoms.text.toString(), etAge.text.toString(), gender,
+            vm.analyzeEcg(uri, etSymptoms.text.toString(), etAge.text.toString(), gender,
                 etHistory.text.toString(), etName.text.toString(), prefs, contentResolver,
-                selectedLayout, selectedPaperSpeed, selectedVoltageGain
-            )
+                layout, speed, voltage)
         }
 
         vm.isLoading.observe(this) { loading ->
             progress.visibility = if (loading) View.VISIBLE else View.GONE
             tvStatus.visibility = if (loading) View.VISIBLE else View.GONE
-            tvStatus.text = "🔍 Analyzing ECG with 38 diagnostic codes..."
+            tvStatus.text = "🔍 Analyzing ECG with AI..."
             btnAnalyze.isEnabled = !loading
         }
 
@@ -126,10 +101,7 @@ class AnalyzeActivity : AppCompatActivity() {
 
     private fun setImage(uri: Uri) {
         imageUri = uri
-        findViewById<ImageView>(R.id.ivPreview).apply {
-            setImageURI(uri)
-            visibility = View.VISIBLE
-        }
+        findViewById<ImageView>(R.id.ivPreview).apply { setImageURI(uri); visibility = View.VISIBLE }
         findViewById<TextView>(R.id.tvNoImage).visibility = View.GONE
     }
 

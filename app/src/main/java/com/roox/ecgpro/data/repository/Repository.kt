@@ -17,7 +17,6 @@ class Repository(private val dao: EcgDao) {
     suspend fun insertChat(m: ChatMessage) = dao.insertChat(m)
     suspend fun recentChats(limit: Int) = dao.recentChats(limit)
     suspend fun clearChat() = dao.clearChat()
-    suspend fun insertTraining(r: TrainingRecord) = dao.insertTraining(r)
-    suspend fun deleteTraining(r: TrainingRecord) = dao.deleteTraining(r)
-    suspend fun trainingCount() = dao.trainingCount()
+    suspend fun insertTraining(t: TrainingRecord) = dao.insertTraining(t)
+    suspend fun deleteTraining(t: TrainingRecord) = dao.deleteTraining(t)
 }

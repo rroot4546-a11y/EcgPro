@@ -9,11 +9,7 @@ import com.roox.ecgpro.data.model.EcgRecord
 import com.roox.ecgpro.data.model.ChatMessage
 import com.roox.ecgpro.data.model.TrainingRecord
 
-@Database(
-    entities = [EcgRecord::class, ChatMessage::class, TrainingRecord::class],
-    version = 2,
-    exportSchema = false
-)
+@Database(entities = [EcgRecord::class, ChatMessage::class, TrainingRecord::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun ecgDao(): EcgDao
     companion object {
@@ -21,8 +17,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun get(context: Context): AppDatabase = INSTANCE ?: synchronized(this) {
             Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "ecgpro_db")
                 .fallbackToDestructiveMigration()
-                .build()
-                .also { INSTANCE = it }
+                .build().also { INSTANCE = it }
         }
     }
 }
