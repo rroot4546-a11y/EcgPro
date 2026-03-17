@@ -1,0 +1,96 @@
+package com.roox.ecgpro.ui.result
+
+import android.os.Bundle
+import android.view.View
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import com.roox.ecgpro.R
+import com.roox.ecgpro.service.EcgWaveformSynthesizer
+import com.roox.ecgpro.view.EcgGraphView
+import com.roox.ecgpro.viewmodel.EcgViewModel
+import coil.load
+import kotlinx.coroutines.launch
+import java.io.File
+
+class ResultActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_result)
+
+        val vm = ViewModelProvider(this).get(EcgViewModel::class.java)
+        val recordId = intent.getIntExtra("record_id", -1)
+        if (recordId == -1) { finish(); return }
+
+        val ivEcg = findViewById<ImageView>(R.id.ivOriginalEcg)
+        val graphView = findViewById<EcgGraphView>(R.id.ecgGraphView)
+        val tvGraphLabel = findViewById<TextView>(R.id.tvGraphLabel)
+        val tvDiagnosis = findViewById<TextView>(R.id.tvDiagnosis)
+        val tvConfidence = findViewById<TextView>(R.id.tvConfidence)
+        val tvUrgency = findViewById<TextView>(R.id.tvUrgency)
+        val tvMeasurements = findViewById<TextView>(R.id.tvMeasurements)
+        val tvAnalysis = findViewById<TextView>(R.id.tvAnalysis)
+        val tvModel = findViewById<TextView>(R.id.tvModel)
+        val tvPatient = findViewById<TextView>(R.id.tvPatient)
+
+        findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
+
+        lifecycleScope.launch {
+            val r = vm.getRecord(recordId) ?: return@launch
+            
+            // Patient info
+            tvPatient.text = buildString {
+                append("👤 ")
+                if (r.patientName.isNotBlank()) append(r.patientName)
+                if (r.patientAge.isNotBlank()) append(", ${r.patientAge}y")
+                if (r.patientGender.isNotBlank()) append(" (${r.patientGender})")
+            }
+
+            // Original image
+            if (r.imagePath.isNotBlank()) ivEcg.load(File(r.imagePath)) { crossfade(true) }
+
+            // AI-synthesized graph
+            try {
+                val params = EcgWaveformSynthesizer.parseFromAiText(r.fullAnalysis)
+                val waveform = EcgWaveformSynthesizer.generateWaveform(params)
+                graphView.setEcgData(waveform, "${params.rhythm} — ${params.heartRate} bpm")
+                tvGraphLabel.text = "🫀 ${params.rhythm} — ${params.heartRate} bpm"
+            } catch (_: Exception) {
+                tvGraphLabel.text = "ECG Waveform"
+                graphView.setEcgData(EcgGraphView.generateNormalSinus(75, 500), "Normal Sinus")
+            }
+
+            // Diagnosis
+            tvDiagnosis.text = r.diagnosis.ifBlank { "Analysis pending" }
+            tvConfidence.text = if (r.confidence > 0) "Confidence: ${r.confidence}%" else ""
+            tvUrgency.text = when (r.urgencyLevel.lowercase()) {
+                "emergent" -> "🔴 EMERGENT — Immediate action required"
+                "urgent" -> "🟡 URGENT — Prompt evaluation needed"
+                else -> "🟢 ROUTINE"
+            }
+            tvUrgency.setTextColor(when (r.urgencyLevel.lowercase()) {
+                "emergent" -> 0xFFD32F2F.toInt()
+                "urgent" -> 0xFFF57C00.toInt()
+                else -> 0xFF388E3C.toInt()
+            })
+
+            // Measurements
+            tvMeasurements.text = buildString {
+                if (r.heartRate > 0) appendLine("❤️ Heart Rate: ${r.heartRate} bpm")
+                if (r.rhythm.isNotBlank()) appendLine("〰️ Rhythm: ${r.rhythm}")
+                if (r.axis.isNotBlank()) appendLine("🧭 Axis: ${r.axis}")
+                if (r.prInterval.isNotBlank()) appendLine("📏 PR Interval: ${r.prInterval}")
+                if (r.qrsDuration.isNotBlank()) appendLine("📐 QRS Duration: ${r.qrsDuration}")
+                if (r.qtInterval.isNotBlank()) appendLine("⏱️ QT/QTc: ${r.qtInterval}")
+                if (r.stChanges.isNotBlank()) appendLine("📊 ST Changes: ${r.stChanges}")
+            }
+
+            // Full analysis
+            tvAnalysis.text = r.fullAnalysis
+
+            // Model
+            tvModel.text = "🤖 ${r.aiModel}"
+        }
+    }
+}

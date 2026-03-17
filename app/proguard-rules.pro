@@ -1,0 +1,3 @@
+-keep class com.roox.ecgpro.data.model.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
