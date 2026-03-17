@@ -11,6 +11,7 @@ import androidx.lifecycle.*
 import com.roox.ecgpro.EcgProApp
 import com.roox.ecgpro.data.model.ChatMessage
 import com.roox.ecgpro.data.model.EcgRecord
+import com.roox.ecgpro.data.model.TrainingRecord
 import com.roox.ecgpro.service.AiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,6 +25,7 @@ class EcgViewModel(application: Application) : AndroidViewModel(application) {
 
     val allRecords: LiveData<List<EcgRecord>> = repo.allRecords
     val allChats: LiveData<List<ChatMessage>> = repo.allChats
+    val allTraining: LiveData<List<TrainingRecord>> = repo.allTraining
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean> = _isLoading
@@ -43,14 +45,17 @@ class EcgViewModel(application: Application) : AndroidViewModel(application) {
         history: String,
         patientName: String,
         prefs: SharedPreferences,
-        contentResolver: ContentResolver
+        contentResolver: ContentResolver,
+        ecgLayout: String = "standard_3x2",
+        paperSpeed: String = "25",
+        voltageGain: String = "10"
     ) {
         _isLoading.value = true
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val ai = AiService.fromPrefs(prefs)
                 val img64 = imageToBase64(imageUri, contentResolver)
-                val result = ai.analyzeEcg(img64, symptoms, age, gender, history)
+                val result = ai.analyzeEcg(img64, symptoms, age, gender, history, ecgLayout, paperSpeed, voltageGain)
 
                 val imagePath = saveImage(imageUri, contentResolver)
                 val hr = extractInt(result, """heart\s*rate[:\s]*(\d+)""") ?: extractInt(result, """(\d+)\s*bpm""") ?: 0
@@ -66,7 +71,13 @@ class EcgViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 val confidence = extractInt(result, """confidence[:\s]*(\d+)""") ?: 0
                 val diagnosis = extractString(result, """(?:primary\s*)?diagnosis[:\s]*(.+)""") ?: "See full analysis"
-                val model = prefs.getString("model", "") ?: ""
+                val modelName = prefs.getString("model", "") ?: ""
+
+                // v2.0: Parse ACS risk
+                val acsRisk = parseAcsRisk(result)
+
+                // v2.0: Parse lead importance as JSON
+                val leadImportance = parseLeadImportance(result)
 
                 val record = EcgRecord(
                     patientName = patientName, patientAge = age, patientGender = gender,
@@ -74,7 +85,9 @@ class EcgViewModel(application: Application) : AndroidViewModel(application) {
                     diagnosis = diagnosis, confidence = confidence, urgencyLevel = urgency,
                     heartRate = hr, rhythm = rhythm, axis = axis, prInterval = prI,
                     qrsDuration = qrsD, qtInterval = qtI, fullAnalysis = result,
-                    ecgParams = "", aiModel = model
+                    ecgParams = "", aiModel = modelName,
+                    ecgLayout = ecgLayout, paperSpeed = paperSpeed, voltageGain = voltageGain,
+                    acsRisk = acsRisk, leadImportance = leadImportance
                 )
                 val id = repo.insertRecord(record)
                 _analysisResult.postValue(record.copy(id = id.toInt()))
@@ -108,6 +121,72 @@ class EcgViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun insertTraining(record: TrainingRecord) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.insertTraining(record)
+        }
+    }
+
+    fun deleteTraining(record: TrainingRecord) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.deleteTraining(record)
+        }
+    }
+
+    /** Parse ACS Risk from AI text */
+    private fun parseAcsRisk(text: String): String {
+        val lower = text.lowercase()
+        return when {
+            lower.contains("acs risk: confirmed") || lower.contains("acs suspicion: yeswithsymptoms") -> "confirmed"
+            lower.contains("acs risk: indeterminate") || lower.contains("acs suspicion: yeswithout") -> "indeterminate"
+            lower.contains("acs risk: not omi") || lower.contains("acs suspicion: no") -> "not_omi"
+            lower.contains("acs risk: outside population") || lower.contains("outside_population") -> "outside_population"
+            lower.contains("acs risk: reperfused") -> "reperfused"
+            lower.contains("acs risk: presentation missing") || lower.contains("presentation missing") -> "presentation_missing"
+            else -> "unknown"
+        }
+    }
+
+    /** Parse lead importance from AI text into JSON string */
+    private fun parseLeadImportance(text: String): String {
+        val leads = listOf("I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6")
+        val result = mutableMapOf<String, String>()
+        val lower = text.lowercase()
+
+        // Try parsing "Lead:level" format
+        for (lead in leads) {
+            val leadLower = lead.lowercase()
+            val pattern = Regex("""$leadLower\s*:\s*(critical|high|moderate|low|normal)""", RegexOption.IGNORE_CASE)
+            val match = pattern.find(lower)
+            if (match != null) {
+                result.put(lead, match.groupValues.get(1).lowercase())
+            } else {
+                result.put(lead, "normal")
+            }
+        }
+
+        // Also check for ranges like "V1-V4(critical)"
+        val rangePattern = Regex("""(V\d)\s*-\s*(V\d)\s*[\(:]?\s*(critical|high|moderate|low|normal)""", RegexOption.IGNORE_CASE)
+        for (match in rangePattern.findAll(text)) {
+            val startNum = match.groupValues.get(1).substring(1).toIntOrNull() ?: continue
+            val endNum = match.groupValues.get(2).substring(1).toIntOrNull() ?: continue
+            val level = match.groupValues.get(3).lowercase()
+            for (n in startNum..endNum) {
+                result.put("V$n", level)
+            }
+        }
+
+        val sb = StringBuilder("{")
+        var first = true
+        for (entry in result.entries) {
+            if (!first) sb.append(",")
+            sb.append("\"${entry.key}\":\"${entry.value}\"")
+            first = false
+        }
+        sb.append("}")
+        return sb.toString()
+    }
+
     private fun imageToBase64(uri: Uri, cr: ContentResolver): String {
         return try {
             val input = cr.openInputStream(uri) ?: return ""
@@ -126,7 +205,7 @@ class EcgViewModel(application: Application) : AndroidViewModel(application) {
         return Bitmap.createScaledBitmap(bmp, (bmp.width * ratio).toInt(), (bmp.height * ratio).toInt(), true)
     }
 
-    private fun saveImage(uri: Uri, cr: ContentResolver): String {
+    fun saveImage(uri: Uri, cr: ContentResolver): String {
         return try {
             val input = cr.openInputStream(uri) ?: return ""
             val dir = File(app.filesDir, "ecg_images"); dir.mkdirs()

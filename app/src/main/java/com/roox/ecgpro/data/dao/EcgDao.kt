@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.roox.ecgpro.data.model.EcgRecord
 import com.roox.ecgpro.data.model.ChatMessage
+import com.roox.ecgpro.data.model.TrainingRecord
 
 @Dao
 interface EcgDao {
@@ -18,4 +19,10 @@ interface EcgDao {
     @Query("SELECT * FROM chat_messages ORDER BY timestamp ASC") fun allChats(): LiveData<List<ChatMessage>>
     @Query("SELECT * FROM chat_messages ORDER BY timestamp DESC LIMIT :limit") suspend fun recentChats(limit: Int): List<ChatMessage>
     @Query("DELETE FROM chat_messages") suspend fun clearChat()
+
+    // Training records
+    @Insert suspend fun insertTraining(r: TrainingRecord): Long
+    @Delete suspend fun deleteTraining(r: TrainingRecord)
+    @Query("SELECT * FROM training_records ORDER BY timestamp DESC") fun allTraining(): LiveData<List<TrainingRecord>>
+    @Query("SELECT COUNT(*) FROM training_records") suspend fun trainingCount(): Int
 }

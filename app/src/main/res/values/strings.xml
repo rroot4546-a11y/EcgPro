@@ -5,6 +5,7 @@
     <string name="nav_analyze">Analyze</string>
     <string name="nav_chat">Chat</string>
     <string name="nav_settings">Settings</string>
+    <string name="nav_training">Training</string>
     <string name="analyze_ecg">Analyze ECG</string>
     <string name="take_photo">📷 Take Photo</string>
     <string name="pick_gallery">🖼️ Pick from Gallery</string>
@@ -34,4 +35,13 @@
     <string name="connection_failed">❌ Connection failed. Check your API key.</string>
     <string name="settings_saved">Settings saved!</string>
     <string name="clear_chat">Clear Chat</string>
+    <string name="generate_pdf">📄 Generate PDF Report</string>
+    <string name="acs_risk">ACS / OMI Risk</string>
+    <string name="lead_importance">Lead Importance</string>
+    <string name="training_mode">Training Mode</string>
+    <string name="onboarding_title">Welcome to ECG Pro</string>
+    <string name="get_started">Get Started</string>
+    <string name="ecg_layout">ECG Layout</string>
+    <string name="paper_speed">Paper Speed</string>
+    <string name="voltage_gain">Voltage Gain</string>
 </resources>

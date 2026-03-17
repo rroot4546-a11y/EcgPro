@@ -25,7 +25,13 @@ data class EcgRecord(
     val fullAnalysis: String = "",
     val ecgParams: String = "",        // JSON of synthesized waveform params
     val aiModel: String = "",
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    // v2.0 fields
+    val ecgLayout: String = "standard_3x2",   // single_page, standard_6x1, standard_3x2, cabrera_6x1, cabrera_3x2
+    val paperSpeed: String = "25",             // "25" or "50" mm/s
+    val voltageGain: String = "10",            // "10" or "5" mm/mV
+    val acsRisk: String = "",                  // confirmed, indeterminate, not_omi, outside_population, reperfused, presentation_missing
+    val leadImportance: String = ""            // JSON: {"I":"normal","II":"high","V1":"critical",...}
 )
 
 @Entity(tableName = "chat_messages")
@@ -34,5 +40,14 @@ data class ChatMessage(
     val role: String = "user",         // user, assistant
     val content: String = "",
     val imageUri: String = "",
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+@Entity(tableName = "training_records")
+data class TrainingRecord(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val imagePath: String = "",
+    val knownDiagnosis: String = "",
+    val notes: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )

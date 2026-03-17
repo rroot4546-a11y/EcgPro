@@ -11,8 +11,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.roox.ecgpro.R
 import com.roox.ecgpro.ui.analyze.AnalyzeActivity
 import com.roox.ecgpro.ui.chat.ChatActivity
+import com.roox.ecgpro.ui.onboarding.OnboardingActivity
 import com.roox.ecgpro.ui.result.ResultActivity
 import com.roox.ecgpro.ui.settings.SettingsActivity
+import com.roox.ecgpro.ui.training.TrainingActivity
 import com.roox.ecgpro.viewmodel.EcgViewModel
 
 class MainActivity : AppCompatActivity() {
@@ -21,6 +23,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check onboarding
+        val prefs = getSharedPreferences("ecg_pro_prefs", MODE_PRIVATE)
+        if (!prefs.getBoolean("onboarding_done", false)) {
+            startActivity(Intent(this, OnboardingActivity::class.java))
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_main)
 
         vm = ViewModelProvider(this).get(EcgViewModel::class.java)
@@ -50,6 +61,9 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.btnSettings).setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
+        }
+        findViewById<View>(R.id.btnTraining).setOnClickListener {
+            startActivity(Intent(this, TrainingActivity::class.java))
         }
     }
 }
