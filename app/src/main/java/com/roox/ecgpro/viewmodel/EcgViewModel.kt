@@ -111,27 +111,31 @@ class EcgViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun imageToBase64(uri: Uri, cr: ContentResolver): String = try {
-        val input = cr.openInputStream(uri) ?: return ""
-        val bmp = BitmapFactory.decodeStream(input); input.close()
-        val s = scaleBitmap(bmp, 1024)
-        val baos = ByteArrayOutputStream()
-        s.compress(Bitmap.CompressFormat.JPEG, 85, baos)
-        Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
-    } catch (_: Exception) { "" }
+    private fun imageToBase64(uri: Uri, cr: ContentResolver): String {
+        return try {
+            val input = cr.openInputStream(uri) ?: return ""
+            val bmp = BitmapFactory.decodeStream(input); input.close()
+            val s = scaleBitmap(bmp, 1024)
+            val baos = ByteArrayOutputStream()
+            s.compress(Bitmap.CompressFormat.JPEG, 85, baos)
+            Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+        } catch (_: Exception) { "" }
+    }
 
     private fun scaleBitmap(bmp: Bitmap, max: Int): Bitmap {
         val r = minOf(max.toFloat() / bmp.width, max.toFloat() / bmp.height)
         return if (r >= 1f) bmp else Bitmap.createScaledBitmap(bmp, (bmp.width * r).toInt(), (bmp.height * r).toInt(), true)
     }
 
-    private fun saveImage(uri: Uri, cr: ContentResolver): String = try {
-        val input = cr.openInputStream(uri) ?: return ""
-        val dir = File(app.filesDir, "ecg_images"); dir.mkdirs()
-        val file = File(dir, "ecg_${System.currentTimeMillis()}.jpg")
-        file.outputStream().use { out -> input.copyTo(out) }; input.close()
-        file.absolutePath
-    } catch (_: Exception) { "" }
+    private fun saveImage(uri: Uri, cr: ContentResolver): String {
+        return try {
+            val input = cr.openInputStream(uri) ?: return ""
+            val dir = File(app.filesDir, "ecg_images"); dir.mkdirs()
+            val file = File(dir, "ecg_${System.currentTimeMillis()}.jpg")
+            file.outputStream().use { out -> input.copyTo(out) }; input.close()
+            file.absolutePath
+        } catch (_: Exception) { "" }
+    }
 
     private fun extractInt(t: String, p: String) = Regex(p, RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()?.toIntOrNull()
     private fun extractStr(t: String, p: String) = Regex(p, RegexOption.IGNORE_CASE).find(t)?.groupValues?.get(1)?.trim()
